@@ -20,7 +20,7 @@ public class SampleTwoTest {
 		driver = new ChromeDriver();
 	}
 	
-	 @Test
+	 @Test(retryAnalyzer = RetryAnalyzer.class)
 	 public void playwrightSearchTest() {
 		  
 		  driver.manage().window().maximize();
@@ -30,7 +30,7 @@ public class SampleTwoTest {
 		  WebElement srcBox = driver.findElement(By.id("APjFqb"));
 		  srcBox.sendKeys("Playwright Tutorial");
 		  srcBox.submit();
-		  Assert.assertEquals(driver.getTitle(), "Playwright Tutorial - Google Search");
+		  Assert.assertEquals(driver.getTitle(), "Playwright Tutorial - Google Search Page");
 		 
 	  }  
 	

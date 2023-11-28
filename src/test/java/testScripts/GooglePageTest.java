@@ -15,6 +15,16 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
+
+import com.aventstack.extentreports.ExtentReports;
+import com.aventstack.extentreports.ExtentTest;
+import com.aventstack.extentreports.MediaEntityBuilder;
+import com.aventstack.extentreports.Status;
+import com.aventstack.extentreports.reporter.ExtentSparkReporter;
+import com.aventstack.extentreports.reporter.configuration.ViewName;
+
+import commonUtils.Utility;
+
 import org.testng.*;
 
 
@@ -22,9 +32,32 @@ public class GooglePageTest {
 	
 	WebDriver driver;
 	
-//	@BeforeMethod
-	@Parameters("browser")
+	
+	ExtentReports reports;
+	ExtentSparkReporter spark;
+	ExtentTest extentTest;
+	
 	@BeforeTest
+	public void setupExtent() {
+		reports = new ExtentReports();
+		spark = new ExtentSparkReporter("target/SparkReport.html")
+				.viewConfigurer()
+				.viewOrder()
+				.as(new ViewName[] {
+						ViewName.DASHBOARD,
+						ViewName.TEST,
+						ViewName.AUTHOR,
+						ViewName.DEVICE,
+						ViewName.LOG
+						
+				}).apply();
+		reports.attachReporter(spark);
+	}
+	
+	
+	@BeforeMethod
+	@Parameters("browser")
+//	@BeforeTest
 	public void setUp(String strBrowser) {
 		if(strBrowser.equalsIgnoreCase("Chrome")) {
 			driver = new ChromeDriver();
@@ -43,6 +76,7 @@ public class GooglePageTest {
   @Test(alwaysRun = true, dependsOnMethods = "seleniumSearchTest")
   public void javaSearchTest() {
 	  
+	  extentTest = reports.createTest("Java Search Test");
 	  driver.manage().window().maximize();
 	  driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
 	  
@@ -60,6 +94,7 @@ public class GooglePageTest {
 	  @Test(priority = 2)
 	  public void seleniumSearchTest() {
 		  
+		  extentTest = reports.createTest("Selenium Search Test");
 		  driver.manage().window().maximize();
 		  driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
 		  
@@ -67,7 +102,7 @@ public class GooglePageTest {
 		  WebElement srcBox = driver.findElement(By.id("APjFqb"));
 		  srcBox.sendKeys("Selenium Tutorial");
 		  srcBox.submit();
-		  Assert.assertEquals(driver.getTitle(), "Selenium Tutorial - Google Search");
+		  Assert.assertEquals(driver.getTitle(), "Selenium Tutorial - Google Search Page");
 		  
 	  }
 	  
@@ -102,12 +137,29 @@ public class GooglePageTest {
 	  }	 
 	  
 	  
-//	 @AfterMethod
-	 @AfterTest
-	 public void tearDown() {
+	 @AfterMethod
+//	 @AfterTest
+	 public void tearDown(ITestResult result) {
+		 extentTest.assignAuthor("Naveen");
+		 extentTest.assignDevice(System.getProperty("os.name"));
+		 extentTest.assignDevice(System.getProperty("os.version"));
+		 extentTest.assignCategory("Regression");
+		 
+		 if(ITestResult.FAILURE == result.getStatus()) {
+			 extentTest.log(Status.FAIL, result.getThrowable().getMessage());
+			 
+			 String strPath = Utility.getScreenshotPath(driver);
+			 extentTest.fail(
+					 MediaEntityBuilder.createScreenCaptureFromPath(strPath).build());
+		 }
+		 
 		 driver.close();
 	 }  
 
+	 @AfterTest
+	 public void finishExtent() {
+		 reports.flush();
+	 }
 	 
 //Hierarchy ==>  Test Suite --> Tests --> Classes --> Methods	 
 	 
